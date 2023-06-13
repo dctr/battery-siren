@@ -9,40 +9,43 @@ import {
   Router,
   ServerAPI,
   showContextMenu,
+  SliderField,
   staticClasses,
 } from "decky-frontend-lib";
-import { VFC } from "react";
-import { FaShip } from "react-icons/fa";
+import { useState, VFC } from "react";
+import { FaCarBattery } from "react-icons/fa";
 
 import logo from "../assets/logo.png";
+import { initializeController } from "./controller";
 
-// interface AddMethodArgs {
-//   left: number;
-//   right: number;
-// }
+const Content: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
+  const controller = initializeController(serverAPI);
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
-  // const [result, setResult] = useState<number | undefined>();
-
-  // const onClick = async () => {
-  //   const result = await serverAPI.callPluginMethod<AddMethodArgs, number>(
-  //     "add",
-  //     {
-  //       left: 2,
-  //       right: 2,
-  //     }
-  //   );
-  //   if (result.success) {
-  //     setResult(result.result);
-  //   }
-  // };
+  const [overchargeLevel, setOverchargeLevel] = useState<number>(controller.settings.overchargeLevel)
+  const overchargeLevelOnChange = (value: number) => setOverchargeLevel(controller.setOverchargeLevel(value));
 
   return (
     <PanelSection title="Panel Section">
       <PanelSectionRow>
+        <SliderField
+          label="Overcharge Level"
+          description="When to notify"
+          value={overchargeLevel}
+          step={5}
+          max={100}
+          min={0}
+          showValue={true}
+          validValues={(n: number) => 100 >= n && n >= 0 && n == Math.trunc(n)}
+          disabled={false} // TODO: Restore comparison to other sliders
+          editableValue={true}
+          onChange={overchargeLevelOnChange}
+        />
+      </PanelSectionRow>
+
+      <PanelSectionRow>
         <ButtonItem
           layout="below"
-          onClick={(e) =>
+          onClick={(e: any) =>
             showContextMenu(
               <Menu label="Menu" cancelText="CAAAANCEL" onCancel={() => {}}>
                 <MenuItem onSelected={() => {}}>Item #1</MenuItem>
@@ -68,7 +71,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
           layout="below"
           onClick={() => {
             Router.CloseSideMenus();
-            Router.Navigate("/decky-plugin-test");
+            Router.Navigate("/battery-siren");
           }}
         >
           Router
@@ -90,16 +93,16 @@ const DeckyPluginRouterTest: VFC = () => {
 };
 
 export default definePlugin((serverApi: ServerAPI) => {
-  serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
+  serverApi.routerHook.addRoute("/battery-siren", DeckyPluginRouterTest, {
     exact: true,
   });
 
   return {
-    title: <div className={staticClasses.Title}>Example Plugin</div>,
+    title: <div className={staticClasses.Title}>Battery Siren</div>,
     content: <Content serverAPI={serverApi} />,
-    icon: <FaShip />,
+    icon: <FaCarBattery />,
     onDismount() {
-      serverApi.routerHook.removeRoute("/decky-plugin-test");
+      serverApi.routerHook.removeRoute("/battery-siren");
     },
   };
 });
